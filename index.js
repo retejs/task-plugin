@@ -24,7 +24,7 @@ export function install(editor) {
                 return taskWorker.call(task, node, inps, data);
             });
 
-            init(task);
+            init(task, node);
             
             mapIndices(component.task.outputs).map(({ type, index }, i) => {
                 outputs[i] = task[type](index);
