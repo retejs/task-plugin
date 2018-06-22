@@ -26,13 +26,13 @@ export class Task {
         this.outputData = null;
     }
 
-    async run(data, needReset = true, garbage = []) {
+    async run(data, needReset = true, garbage = [], propagate = true) {
         garbage.push(this);
 
         var inputs = await Promise.all(this.getOutputs().map(async input => {
             return await Promise.all(input.map(async con => {
                 if (con) {
-                    await con.run(data, false, garbage);
+                    await con.run(data, false, garbage, false);
                     return con.get();
                 }
             }));
@@ -40,14 +40,15 @@ export class Task {
 
         if (!this.outputData) {
             this.outputData = await this.action(inputs, data);
-
-            await Promise.all(
-                this.next
-                    .filter(f => !this.closed.includes(f.index))
-                    .map(async f => 
-                        await f.task.run(data, false, garbage)
-                    )
-            );
+            
+            if(propagate)
+                await Promise.all(
+                    this.next
+                        .filter(f => !this.closed.includes(f.index))
+                        .map(async f => 
+                            await f.task.run(data, false, garbage)
+                        )
+                );
         }
         
         if (needReset)
