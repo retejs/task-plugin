@@ -10,7 +10,7 @@ function mapIndices(outputs) {
         }));
 }
 
-export function install(editor) {
+function install(editor) {
         
     editor.on('componentregister', component => {
         if (!component.task)
@@ -32,4 +32,8 @@ export function install(editor) {
         }
 
     });
+}
+
+export default {
+    install
 }
