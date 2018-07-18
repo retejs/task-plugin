@@ -1,15 +1,5 @@
 import { Task } from './task';
 
-function mapIndices(outputs) {
-    var i = 0, j = 0;
-
-    return outputs.map(type =>
-        ({
-            type,
-            index: type === 'option' ? i++ : j++
-        }));
-}
-
 function install(editor) {
         
     editor.on('componentregister', component => {
@@ -26,9 +16,15 @@ function install(editor) {
 
             init(task, node);
             
-            mapIndices(component.task.outputs).map(({ type, index }, i) => {
-                outputs[i] = task[type](index);
+            Object.keys(component.task.outputs).map(key => {
+                const type = component.task.outputs[key];
+
+                if (type === 'option')
+                    outputs[key] = task.option(key);
+                else if (type === 'output')
+                    outputs[key] = task.output(key);
             });
+            console.log(inputs, outputs)
         }
 
     });

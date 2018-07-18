@@ -7,19 +7,19 @@ export class Task {
         this.outputData = null;
         this.closed = [];
 
-        this.getOptions().forEach(input => {
-            input.forEach(con => {
-                con.task.next.push({index: con.index, task: this});
+        this.getOptions().forEach(key => {
+            this.inputs[key].forEach(con => {
+                con.task.next.push({key: con.key, task: this});
             })
         });
     }
 
     getOptions() {
-        return this.inputs.filter(input => input[0] && input[0].task)
+        return Object.keys(this.inputs).filter(key => this.inputs[key][0] && this.inputs[key][0].task)
     }
 
     getOutputs() {
-        return this.inputs.filter(input => input[0] && input[0].get);
+        return Object.keys(this.inputs).filter(key => this.inputs[key][0] && this.inputs[key][0].get);
     }
 
     reset() {
@@ -28,9 +28,11 @@ export class Task {
 
     async run(data, needReset = true, garbage = [], propagate = true) {
         garbage.push(this);
-
-        var inputs = await Promise.all(this.getOutputs().map(async input => {
-            return await Promise.all(input.map(async con => {
+        
+        var inputs = {};
+        
+        await Promise.all(this.getOutputs().map(async key => {
+            inputs[key] = await Promise.all(this.inputs[key].map(async con => {
                 if (con) {
                     await con.run(data, false, garbage, false);
                     return con.get();
@@ -40,11 +42,11 @@ export class Task {
 
         if (!this.outputData) {
             this.outputData = await this.action(inputs, data);
-            
-            if(propagate)
+
+            if (propagate)
                 await Promise.all(
                     this.next
-                        .filter(f => !this.closed.includes(f.index))
+                        .filter(f => !this.closed.includes(f.key))
                         .map(async f => 
                             await f.task.run(data, false, garbage)
                         )
@@ -55,19 +57,19 @@ export class Task {
             garbage.map(t => t.reset());
     }
 
-    option(index) {
+    option(key) {
         var task = this;
 
-        return {task, index}
+        return {task, key}
     }
 
-    output(index) {
+    output(key) {
         var task = this;
 
         return {
             run: task.run.bind(task),
             get() {
-                return task.outputData[index];
+                return task.outputData[key];
             }
         }
     }
