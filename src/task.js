@@ -1,7 +1,8 @@
 export class Task {
 
-    constructor(inputs, action) {
+    constructor(inputs, component, action) {
         this.inputs = inputs;
+        this.component = component;
         this.action = action;
         this.next = [];
         this.outputData = null;
