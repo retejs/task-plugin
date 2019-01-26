@@ -41,7 +41,7 @@ export class Task {
                 }));
             }));
 
-            this.outputData = await this.worker(inputs, data);
+            this.outputData = await this.worker(this, inputs, data);
 
             if (propagate)
                 await Promise.all(

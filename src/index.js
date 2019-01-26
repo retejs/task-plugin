@@ -13,8 +13,8 @@ function install(editor) {
         const types = component.task.outputs;
 
         component.worker = (node, inputs, outputs) => {
-            const task = new Task(inputs, component, (inps, data) => {
-                return taskWorker.call(task, node, inps, data);
+            const task = new Task(inputs, component, (ctx, inps, data) => {
+                return taskWorker.call(ctx, node, inps, data);
             });
 
             init(task, node);
