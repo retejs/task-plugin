@@ -1,26 +1,24 @@
 export class Task {
 
-    constructor(inputs, component, action) {
+    constructor(inputs, component, worker) {
         this.inputs = inputs;
         this.component = component;
-        this.action = action;
+        this.worker = worker;
         this.next = [];
         this.outputData = null;
         this.closed = [];
 
-        this.getOptions().forEach(key => {
+        this.getInputs('option').forEach(key => {
             this.inputs[key].forEach(con => {
-                con.task.next.push({key: con.key, task: this});
+                con.task.next.push({ key: con.key, task: this });
             })
         });
     }
 
-    getOptions() {
-        return Object.keys(this.inputs).filter(key => this.inputs[key][0] && this.inputs[key][0].task)
-    }
-
-    getOutputs() {
-        return Object.keys(this.inputs).filter(key => this.inputs[key][0] && this.inputs[key][0].get);
+    getInputs(type) {
+        return Object.keys(this.inputs)
+            .filter(key => this.inputs[key][0])
+            .filter(key => this.inputs[key][0].type === type)
     }
 
     reset() {
@@ -28,21 +26,22 @@ export class Task {
     }
 
     async run(data, needReset = true, garbage = [], propagate = true) {
-        garbage.push(this);
+        if (needReset)
+            garbage.push(this);
         
-        var inputs = {};
-        
-        await Promise.all(this.getOutputs().map(async key => {
-            inputs[key] = await Promise.all(this.inputs[key].map(async con => {
-                if (con) {
-                    await con.run(data, false, garbage, false);
-                    return con.get();
-                }
-            }));
-        }));
-
         if (!this.outputData) {
-            this.outputData = await this.action(inputs, data);
+            var inputs = {};
+
+            await Promise.all(this.getInputs('output').map(async key => {
+                inputs[key] = await Promise.all(this.inputs[key].map(async con => {
+                    if (con) {
+                        await con.task.run(data, false, garbage, false);
+                        return con.task.outputData[con.key];
+                    }
+                }));
+            }));
+
+            this.outputData = await this.worker(inputs, data);
 
             if (propagate)
                 await Promise.all(
@@ -57,21 +56,25 @@ export class Task {
         if (needReset)
             garbage.map(t => t.reset());
     }
+  
+    clone(root = true, oldTask, newTask) {
+        const inputs = Object.assign({}, this.inputs);
 
-    option(key) {
-        var task = this;
+        if (root) // prevent of adding this task to `next` property of predecessor
+            this.getInputs('option').map(key => delete inputs[key]);
+        else // replace old tasks with new copies
+            Object.keys(inputs).map(key => {
+                inputs[key] = inputs[key].map(con => ({
+                    ...con,
+                    task: con.task === oldTask ? newTask : con.task
+                }));
+            });
+    
+        const task = new Task(inputs, this.component, this.worker);
 
-        return {task, key}
-    }
-
-    output(key) {
-        var task = this;
-
-        return {
-            run: task.run.bind(task),
-            get() {
-                return task.outputData[key];
-            }
-        }
+        // manually add a copies of follow tasks
+        task.next = this.next.map(n => ({ key: n.key, task: n.task.clone(false, this, task)}));
+    
+        return task;
     }
 }

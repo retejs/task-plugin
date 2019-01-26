@@ -10,6 +10,7 @@ function install(editor) {
         
         const taskWorker = component.worker;
         const init = component.task.init || function() { };
+        const types = component.task.outputs;
 
         component.worker = (node, inputs, outputs) => {
             const task = new Task(inputs, component, (inps, data) => {
@@ -18,13 +19,8 @@ function install(editor) {
 
             init(task, node);
             
-            Object.keys(component.task.outputs).map(key => {
-                const type = component.task.outputs[key];
-
-                if (type === 'option')
-                    outputs[key] = task.option(key);
-                else if (type === 'output')
-                    outputs[key] = task.output(key);
+            Object.keys(types).map(key => {
+                outputs[key] = { type: types[key], key, task }
             });
         }
 
