@@ -9,18 +9,17 @@ function install(editor) {
             throw 'The "outputs" field must be an object whose keys correspond to the Output\'s keys';
         
         const taskWorker = component.worker;
-        const init = component.task.init || function() { };
-        const types = component.task.outputs;
+        const taskOptions = component.task;
 
         component.worker = (node, inputs, outputs) => {
             const task = new Task(inputs, component, (ctx, inps, data) => {
                 return taskWorker.call(ctx, node, inps, data);
             });
 
-            init(task, node);
+            if (taskOptions.init) taskOptions.init(task, node);
             
-            Object.keys(types).map(key => {
-                outputs[key] = { type: types[key], key, task }
+            Object.keys(taskOptions.outputs).map(key => {
+                outputs[key] = { type: taskOptions.outputs[key], key, task }
             });
         }
 
