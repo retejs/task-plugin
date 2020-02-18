@@ -1,4 +1,4 @@
-import { Task } from './task';
+export { Task } from './task';
 
 function install(editor) {
         
