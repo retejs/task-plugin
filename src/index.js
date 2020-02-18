@@ -26,6 +26,7 @@ function install(editor) {
     });
 }
 
+export { Task } from './task';
 export default {
     install
 }
