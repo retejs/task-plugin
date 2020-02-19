@@ -1,8 +1,9 @@
 {
   "name": "rete-task-plugin",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "",
-  "main": "build/task-plugin.min.js",
+  "main": "build/task-plugin.common.js",
+  "module": "build/task-plugin.esm.js",
   "scripts": {
     "build": "rete --build rete.config.js",
     "build:dev": "rete --build rete.config.js --watch",
@@ -16,6 +17,6 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "rete-cli": "^0.1.0"
+    "rete-cli": "^0.6.0"
   }
 }
